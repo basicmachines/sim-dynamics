@@ -166,7 +166,7 @@ class Pendulum(object):
         self.outputs['dadt'].value = -self.body.angularVelocity
 
         # Torque applied to pendulum
-        self.outputs['F'].value = -self.torque
+        self.outputs['T'].value = -self.torque
 
 
 class CartPole(object):
