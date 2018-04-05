@@ -24,7 +24,6 @@ in the pybox2d repository:
 https://github.com/pybox2d/pybox2d/tree/master/examples/simple
 """
 
-
 class Variable(object):
     """Used to define variables for use as inputs to or outputs
     from a physics simulation model.

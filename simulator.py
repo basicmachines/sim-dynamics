@@ -32,8 +32,8 @@ from pygame.locals import QUIT, KEYDOWN, K_ESCAPE, K_SPACE, K_0, K_1, K_2, \
 import Box2D
 from Box2D.b2 import staticBody, dynamicBody, polygonShape, circleShape
 
-import datetime
 import logging
+from platform import python_version
 
 from data_output import ModelStateRecorder
 
@@ -47,6 +47,8 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s %(levelname)s %(message)s'
 )
+
+logging.info("Running on Python %s" % python_version())
 
 # ------- Box2D settings and constants ------
 
@@ -74,7 +76,12 @@ class Simulator(object):
 
         # -------------- pygame setup ---------------
 
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
+        self.screen = pygame.display.set_mode(
+            (SCREEN_WIDTH, SCREEN_HEIGHT),
+            0,
+            32
+        )
+
         pygame.display.set_caption('Physical Model Simulator')
         self.clock = pygame.time.Clock()
 
@@ -91,17 +98,19 @@ class Simulator(object):
         def my_draw_polygon(polygon, body, fixture):
             vertices = [(body.transform * v) * PPM for v in polygon.vertices]
             vertices = [(v[0], SCREEN_HEIGHT - v[1]) for v in vertices]
-            pygame.draw.polygon(self.screen, self.object_colors[body.type], vertices)
+            pygame.draw.polygon(self.screen, self.object_colors[body.type],
+                                vertices)
 
         polygonShape.draw = my_draw_polygon
 
         def my_draw_circle(circle, body, fixture):
             position = body.transform * circle.pos * PPM
             position = (position[0], SCREEN_HEIGHT - position[1])
-            pygame.draw.circle(self.screen, self.object_colors[body.type], [int(
-                x) for x in position], int(circle.radius * PPM))
-            # Note: Python 3.x will enforce that pygame get the integers it requests,
-            #       and it will not convert from float.
+            pygame.draw.circle(self.screen, self.object_colors[body.type],
+                               [int(x) for x in position],
+                               int(circle.radius * PPM))
+            # Note: Python 3.x will enforce that pygame get the integers
+            # it requests, and it will not convert from float.
 
         circleShape.draw = my_draw_circle
 
@@ -124,16 +133,20 @@ class Simulator(object):
         logging.info("%s model added", self.model.name)
 
         # Data output file
-        self.model_state_recorder = ModelStateRecorder(model, output_file_location=output_file_location)
+        self.model_state_recorder = ModelStateRecorder(model,
+                                     output_file_location=output_file_location)
 
         # Prepare objects for screen display
 
         # Choose fonts
         pygame.font.init()
         self.fonts = {
-            '14_bold': pygame.font.SysFont("bitstreamverasans", 14, bold=True, italic=False),
-            '12': pygame.font.SysFont("bitstreamverasans", 12, bold=False, italic=False),
-            '12_mono': pygame.font.SysFont("monospace", 12, bold=False, italic=False)
+            '14_bold': pygame.font.SysFont("bitstreamverasans", 14, bold=True,
+                                           italic=False),
+            '12': pygame.font.SysFont("bitstreamverasans", 12, bold=False,
+                                      italic=False),
+            '12_mono': pygame.font.SysFont("monospace", 12, bold=False,
+                                           italic=False)
         }
 
         # Choose colors
@@ -150,7 +163,8 @@ class Simulator(object):
         self.text_messages = [
             'Keys:',
             'SPACE - pause/resume',
-            '{} - select controller (1=keyboard)'.format(range(1, len(controllers) + 1)),
+            '{} - select controller (1=keyboard)'.format(
+                                             range(1, len(controllers) + 1)),
             'r - start/stop recording state',
         ] + self.key_instructions + ['ESCAPE - quit']
 
@@ -168,17 +182,21 @@ class Simulator(object):
             y = (1 + len(self.text_fields))*self.line_spacing
 
             self.text_fields.append({
-                'surface': self.fonts['12'].render(text, True, self.text_color1),
+                'surface': self.fonts['12'].render(text, True,
+                                                   self.text_color1),
                 'pos': (4, y)
             })
 
-        for p in (['t', 'input', 'recording'] + self.model.inputs.keys() + self.model.outputs.keys()):
+        for p in (['t', 'input', 'recording'] +
+                  list(self.model.inputs.keys()) +
+                  list(self.model.outputs.keys())):
 
             y = (1 + len(self.number_fields))*self.line_spacing
 
             self.text_fields.append({
                 'surface': self.fonts['12'].render(p, True, self.text_color1),
-                'pos': (SCREEN_WIDTH - self.number_field_size[0] - self.fonts['12'].size(p)[0] - 12, y)
+                'pos': (SCREEN_WIDTH - self.number_field_size[0] -
+                        self.fonts['12'].size(p)[0] - 12, y)
             })
 
             self.number_fields[p] = {
@@ -219,7 +237,8 @@ class Simulator(object):
                     # Change the controller if a number key pressed
                     if K_1 <= event.key < (K_1 + len(self.controllers)):
                         self.controller = int(event.key - K_1)
-                        logging.info("Control switched to %s", self.controllers[self.controller].name)
+                        logging.info("Control switched to %s",
+                                     self.controllers[self.controller].name)
 
                     if event.key == K_r:
                         recording = not recording
@@ -263,23 +282,32 @@ class Simulator(object):
                 self.screen.blit(t['surface'], t['pos'])
 
             # Display model input and output values
-            for (p, d) in (self.model.inputs.items() + self.model.outputs.items()):
+            for (p, d) in (list(self.model.inputs.items()) +
+                           list(self.model.outputs.items())):
                 if d.type == 'float':
                     f = "{:8.2f}"
                 else:
                     f = "{}"
-                surface = self.fonts['12_mono'].render(f.format(d.value), False,
-                                                       self.text_color2)
+                surface = self.fonts['12_mono'].render(f.format(d.value),
+                                                       False, self.text_color2)
                 self.screen.blit(surface, self.number_fields[p]['pos'])
 
             # Display timestep
-            surface = self.fonts['12_mono'].render("{:8.2f}".format(self.time_step_t*TIME_STEP),
-                                                   False, self.text_color2)
+            surface = self.fonts['12_mono'].render(
+                "{:8.2f}".format(self.time_step_t*TIME_STEP),
+                False,
+                self.text_color2
+            )
+
             self.screen.blit(surface, self.number_fields['t']['pos'])
 
             # Display control input source
-            surface = self.fonts['12_mono'].render("{:8s}".format(
-                          self.controllers[self.controller].name), False, self.text_color2)
+            surface = self.fonts['12_mono'].render(
+                "{:8s}".format(self.controllers[self.controller].name),
+                False,
+                self.text_color2
+            )
+
             self.screen.blit(surface, self.number_fields['input']['pos'])
 
             # Display recording state

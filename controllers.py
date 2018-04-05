@@ -26,7 +26,7 @@ https://github.com/pybox2d/pybox2d/tree/master/examples/simple
 
 import pygame
 from collections import deque
-
+from future.utils import iteritems
 
 class KeyboardInput(object):
 
@@ -43,7 +43,7 @@ class KeyboardInput(object):
 
         # Update model inputs if there is a change
         # Note: keys only work on binary (True/False) model inputs
-        for k, a in self.key_actions.iteritems():
+        for k, a in iteritems(self.key_actions):
             if keys[k]:
                 self.model_inputs[a].value = True
             else:
