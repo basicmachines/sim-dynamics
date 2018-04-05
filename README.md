@@ -17,13 +17,14 @@ Files contained in the module:
 
 1. simulator.py - main program file
 2. vars.py - Variable class
-3. data_output.py - class for file output operations
-4. controllers.py - contains a PID controller
+3. data_output.py - file output operations
+4. models.py - example models
+5. controllers.py - contains a keyboard and a PID controller
 
 Example simulations:
 
-1. pendulum.py
-2. cart-pole.py
+1. pendulum.py - simple pendulum
+2. cart-pole.py - cart-and-pole system
 
 The pyBox2d shape classes are extended with some drawing
 code so that they render in pygame.  Adapted from the examples 
