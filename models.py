@@ -7,27 +7,26 @@ self-contained pygame environment for the purpose of
 experimenting with dynamic models and dynamic model
 controllers.
 
-The pyBox2d shape classes are extended with some drawing
-code so that they render in pygame.
-
-An example model of a simple pendulum is included. The
-pendulum can be influenced manually through keyboard
+The systems can be influenced manually through keyboard
 commands or controlled by a simple controller (PID).
 
-Files contained in this module:
+Files contained in the module:
+
  1. simulator.py - main program file
  2. vars.py - Variable class
- 3. data_output.py - class for file output operations
- 4. pendulum.py - example model
- 5. controllers.py - contains a PID controller
+ 3. data_output.py - file output operations
+ 4. models.py - example models
+ 5. controllers.py - contains a keyboard and a PID controller
 
-Adapted from the examples in the pybox2d repository:
+The pyBox2d shape classes are extended with some drawing
+code so that they render in pygame.  Adapted from the examples
+in the pybox2d repository:
 https://github.com/pybox2d/pybox2d/tree/master/examples/simple
 """
 
 import Box2D
-from Box2D.b2 import pi, vec2
-
+from Box2D.b2 import vec2
+from math import sin, cos, pi
 from vars import Variable
 
 # TODO: Consider a superclass that models inherit from
@@ -167,7 +166,7 @@ class Pendulum(object):
         self.outputs['dadt'].value = -self.body.angularVelocity
 
         # Torque applied to pendulum
-        self.outputs['T'].value = -self.torque
+        self.outputs['F'].value = -self.torque
 
 
 class CartPole(object):
@@ -189,11 +188,11 @@ class CartPole(object):
     """
 
     def __init__(self, position=(0, 0), pole_length=12.0,
-                 pole_width=0.4, cart_width=4.0, cart_height=2.0, start_angle=-0.5*pi,
+                 pole_width=0.4, cart_width=4.0, cart_height=2.0, start_angle=0.5*pi,
                  joint_friction_torque=10.0, sliding_friction=20.0, min_motor_force=10.0):
 
         self.name = 'Cart-Pole'
-        self.cart_position = vec2(position)
+        self.start_position = position[0]
 
         # Pendulum parameters
         self.pole_length = pole_length
@@ -204,6 +203,7 @@ class CartPole(object):
         self.joint_friction_torque = joint_friction_torque
         self.sliding_friction = sliding_friction
         self.min_motor_force = min_motor_force
+        self.cart_position = vec2(position[0] - pole_length*cos(start_angle), position[1])
 
         # Cart force inputs (manipulated variables)
         self.inputs = {
@@ -226,11 +226,13 @@ class CartPole(object):
 
         self.force = 0.0
 
+        self.start_position = float(position[0])
+
         # Model variables (outputs)
         self.outputs = {
-            'T': Variable('float', name='T', init_value=0.0),
-            'a': Variable('float', name='a', init_value=(start_angle - 0.5*pi)),
-            'dadt': Variable('float', name='dadt', init_value=0.0)
+            'F': Variable('float', name='F', init_value=0.0),
+            'x': Variable('float', name='x', init_value=self.start_position),
+            'dxdt': Variable('float', name='dxdt', init_value=0.0)
         }
 
     def add_to_box2d(self, world):
@@ -247,7 +249,7 @@ class CartPole(object):
         )
 
         self.pole_fixture = self.pole_body.CreatePolygonFixture(
-            box=(0.5*self.pole_length, 0.5*self.pole_width, (-0.5*self.pole_length, 0), 0.0),
+            box=(0.5*self.pole_length, 0.5*self.pole_width, (0.5*self.pole_length, 0), 0.0),
             density=1,
             friction=0.3
         )
@@ -305,13 +307,19 @@ class CartPole(object):
         # from getting too large or small
         self.pole_body.angle %= 2*pi
 
-        # For this model, the angle of the pendulum is measured
-        # from the vertical position (clockwise = positive)
-        # The range of the angle is limited to -pi to pi.
-        self.outputs['a'].value = ((1.5*pi - self.pole_body.angle) % (2*pi)) - pi
+        # For this model, the control variable is the horizontal
+        # position of the top of the pole. x=0 is the center position.
 
-        # Speed of rotation
-        self.outputs['dadt'].value = -self.pole_body.angularVelocity
+        pole_angle = self.pole_body.angle
+        self.outputs['x'].value = self.pole_length*cos(pole_angle) + self.pole_body.position.x
 
-        # Torque applied to pendulum
-        self.outputs['T'].value = -self.force
+        dadt = -self.pole_body.angularVelocity
+
+        # Horizontal speed of top of base of pole
+        dxdt = self.pole_body.linearVelocity.x
+
+        # Horizontal speed of top of pole
+        self.outputs['dxdt'].value = dadt*self.pole_length/(2*pi) + dxdt
+
+        # Force applied to cart
+        self.outputs['F'].value = -self.force

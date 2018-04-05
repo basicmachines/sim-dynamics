@@ -58,7 +58,7 @@ force_settings = {
 }
 
 pid_controller = PIDController(
-    cv=model.outputs['a'],
+    cv=model.outputs['x'],
     mv=model.inputs,
     kp=-30.0,
     ki=0.0,

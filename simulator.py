@@ -7,21 +7,20 @@ self-contained pygame environment for the purpose of
 experimenting with dynamic models and dynamic model
 controllers.
 
-The pyBox2d shape classes are extended with some drawing
-code so that they render in pygame.
-
-An example model of a simple pendulum is included. The
-pendulum can be influenced manually through keyboard
+The systems can be influenced manually through keyboard
 commands or controlled by a simple controller (PID).
 
-Files contained in this module:
+Files contained in the module:
+
  1. simulator.py - main program file
  2. vars.py - Variable class
- 3. data_output.py - class for file output operations
- 4. pendulum.py - example model
- 5. controllers.py - contains a PID controller
+ 3. data_output.py - file output operations
+ 4. models.py - example models
+ 5. controllers.py - contains a keyboard and a PID controller
 
-Adapted from the examples in the pybox2d repository:
+The pyBox2d shape classes are extended with some drawing
+code so that they render in pygame.  Adapted from the examples
+in the pybox2d repository:
 https://github.com/pybox2d/pybox2d/tree/master/examples/simple
 """
 
