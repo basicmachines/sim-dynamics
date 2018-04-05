@@ -5,7 +5,7 @@ self-contained [pygame](https://www.pygame.org/) environment for the purpose of
 experimenting with dynamic models and dynamic model
 controllers.
 
-<img src="/images/screenshot.png" alt="Screenshot">
+<img src="/images/screenshot.png" width=400 alt="Screenshot">
 
 Two example models are included: a simple pendulum and
 a cart-pole system. 
