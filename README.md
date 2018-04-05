@@ -1,12 +1,11 @@
 # sim-dynamics
-Simulates dynamic physical systems using Box2D and pygame graphics.
 
-<IMG SRC="images/screenshot.png">
-
-A dynamic physical model simulator using pyBox2d within a
-self-contained pygame environment for the purpose of
+A dynamic physical model simulator using [Box2D](https://github.com/pybox2d) within a
+self-contained [pygame](https://www.pygame.org/) environment for the purpose of
 experimenting with dynamic models and dynamic model
 controllers.
+
+<img src="/images/screenshot.png" alt="Screenshot">
 
 Two example models are included: a simple pendulum and
 a cart-pole system. 
