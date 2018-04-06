@@ -83,7 +83,7 @@ class ModelStateRecorder(object):
         """
 
         path = (self.output_file_location + "/" +
-                               self.output_filename)
+                self.output_filename)
 
         new_file = False if os.path.exists(path) else True
 
@@ -100,16 +100,18 @@ class ModelStateRecorder(object):
                 labels.append(str(k))
 
             for k in self.model.outputs.keys():
-                labels.append(str(k))
+                labels.append("{}_p1".format(k))
 
             for k in self.model.outputs.keys():
-                labels.append("{}_p1".format(k))
+                labels.append(str(k))
 
             logging.info("Output file %s opened", self.output_filename.__repr__())
             self.output_file.write(",".join(labels) + '\n')
 
     def start(self):
-        """Stops saving the model state to file and closes file."""
+        """Opens the output file and starts saving the model
+        state.
+        """
 
         if self.output_file is None or self.output_file.closed:
             self.open_file()
@@ -117,7 +119,9 @@ class ModelStateRecorder(object):
         self.recording = True
 
     def stop(self):
-        """Stops saving the model state to file and closes file."""
+        """Closes the output file and stops saving the model
+        state.
+        """
 
         if self.recording:
             self.output_file.close()
@@ -133,6 +137,7 @@ class ModelStateRecorder(object):
         if self.output_file.closed:
             raise IOError("Output file is not open for writing.")
 
+        # Start saving state after first time step
         if self.previous_state:
 
             d = list()

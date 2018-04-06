@@ -52,7 +52,7 @@ class Pendulum(object):
     """
 
     def __init__(self, position=(0.0, 0.0), arm_length=8.0, arm_width=0.4,
-                 ball_radius=1.0, start_angle=-0.5*pi,
+                 ball_radius=1.0, start_angle=pi,
                  joint_friction_torque=10.0, min_motor_torque=20.0):
 
         self.name = 'Pendulum'
@@ -90,7 +90,7 @@ class Pendulum(object):
         # Pendulum variables (outputs)
         self.outputs = {
             'T': Variable('float', name='T', init_value=0.0),
-            'a': Variable('float', name='a', init_value=(self.start_angle - 0.5*pi)),
+            'a': Variable('float', name='a', init_value=self.start_angle),
             'dadt': Variable('float', name='dadt', init_value=0.0)
         }
 
@@ -104,7 +104,7 @@ class Pendulum(object):
         # Create a dynamic body for the pendulum
         self.body = world.CreateDynamicBody(
             position=self.fulcrum_position,
-            angle=self.start_angle
+            angle=0.5*pi - self.start_angle
         )
 
         self.arm_fixture = self.body.CreatePolygonFixture(
@@ -149,14 +149,19 @@ class Pendulum(object):
         method after each time step of the physics
         simulation."""
 
-        # This is necessary to prevent the angle
-        # from getting too large or small
-        self.body.angle %= 2*pi
+        # This is necessary to prevent the angle from
+        # getting too large or small
+
+        self.body.angle = ((self.body.angle + 0.5*pi) % (2*pi)) - 0.5*pi
 
         # For this model, the angle of the pendulum is measured
         # from the vertical position (clockwise = positive)
-        # The range of the angle is limited to -pi to pi.
-        self.outputs['a'].value = ((1.5*pi - self.body.angle) % (2*pi)) - pi
+        # The range of the angle is limited to -pi to pi
+        self.outputs['a'].value = 0.5*pi - self.body.angle
+
+        # Alternative way to implement above without affecting
+        # self.body.angle:
+        # self.outputs['a'].value = ((1.5*pi - self.body.angle) % (2*pi)) - pi
 
         # Speed of rotation
         self.outputs['dadt'].value = -self.body.angularVelocity
@@ -171,7 +176,7 @@ class Pendulum(object):
         self.body.angularVelocity = 0.0
         self.body.linearVelocity = b2Vec2(0.0, 0.0)
         self.body.position = self.fulcrum_position
-        self.body.angle = self.start_angle
+        self.body.angle = 0.5*pi - self.start_angle
         self.update_outputs()
 
 

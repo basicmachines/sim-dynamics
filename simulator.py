@@ -252,6 +252,7 @@ class Simulator(object):
 
                     if event.key == K_q:
                         self.model.reset()
+                        self.model_state_recorder.previous_state = None
                         logging.info("Model state reset")
 
             # Call the current controller to set
