@@ -24,7 +24,6 @@ in the pybox2d repository:
 https://github.com/pybox2d/pybox2d/tree/master/examples/simple
 """
 
-import Box2D
 from Box2D import b2Vec2
 from math import cos, pi
 from vars import Variable
@@ -35,20 +34,32 @@ from vars import Variable
 #     """
 #     pass
 
-
 class Pendulum(object):
     """
     Dynamic simulation model of a pendulum using Box2D.
 
-    Arguments:
-        position (Box2D.b2Vec2): x, y co-ordinates of pendulum's
-                                 fulcrum.
-        arm_length (float)
-        arm_width (float)
-        ball_radius (float)
-        start_angle (float): Initial angle of pendulum (radians)
-        joint_friction_torque (float)
-        min_motor_torque (float)
+    Attributes:
+        position (tuple or b2Vec2): (x, y) co-ordinates of pendulum's
+                                    fulcrum.
+        arm_length (float): Dimensions of pendulum arm
+        arm_width (float): ... etc.
+        ball_radius (float):
+        start_angle (float): Initial angle of pendulum. Clockwise in
+                             radians. start_angle = 0.0 is vertical up.
+        joint_friction_torque (float): Determines the amount of friction
+                                       in the fulcrum joint.
+        min_motor_torque (float): Determines how much torque is applied by
+                                  each unit of input torque.
+        inputs (list): List of input variables (of type vars.Variable).
+        outputs (list): List of output variables (of type vars.Variable).
+        torque_settings (dict): Dictionary of values mapping inputs
+                                ('TP1', 'TP2', etc.) to units of torque.
+        torque (float): Applied torque calculated in update_inputs().
+        anchor_body (b2Body): Object to represent the pendulum physics.
+        body (b2Body): ... etc.
+        arm_fixture (b2Body)
+        ball_fixture (b2Body)
+        joint (b2Body)
     """
 
     def __init__(self, position=(0.0, 0.0), arm_length=8.0, arm_width=0.4,
@@ -56,7 +67,7 @@ class Pendulum(object):
                  joint_friction_torque=10.0, min_motor_torque=20.0):
 
         self.name = 'Pendulum'
-        self.fulcrum_position = b2Vec2(position)
+        self.position = b2Vec2(position)
 
         # Pendulum parameters
         self.arm_length = arm_length
@@ -95,15 +106,20 @@ class Pendulum(object):
         }
 
     def add_to_box2d(self, world):
+        """Create the Box2D objects in world.
+
+        Args:
+            world: Box2D world object
+        """
 
         # Create a static body for the pendulum's anchor
         self.anchor_body = world.CreateStaticBody(
-            position=self.fulcrum_position
+            position=self.position
         )
 
         # Create a dynamic body for the pendulum
         self.body = world.CreateDynamicBody(
-            position=self.fulcrum_position,
+            position=self.position,
             angle=0.5*pi - self.start_angle
         )
 
@@ -151,12 +167,12 @@ class Pendulum(object):
 
         # This is necessary to prevent the angle from
         # getting too large or small
-
         self.body.angle = ((self.body.angle + 0.5*pi) % (2*pi)) - 0.5*pi
 
         # For this model, the angle of the pendulum is measured
         # from the vertical position (clockwise = positive)
         # The range of the angle is limited to -pi to pi
+        # by the statement above
         self.outputs['a'].value = 0.5*pi - self.body.angle
 
         # Alternative way to implement above without affecting
@@ -171,11 +187,11 @@ class Pendulum(object):
 
     def reset(self):
         """Resets the model variables to their initial
-        state."""
+        states."""
 
         self.body.angularVelocity = 0.0
         self.body.linearVelocity = b2Vec2(0.0, 0.0)
-        self.body.position = self.fulcrum_position
+        self.body.position = self.position
         self.body.angle = 0.5*pi - self.start_angle
         self.update_outputs()
 
@@ -184,18 +200,35 @@ class CartPole(object):
     """
     Dynamic simulation model of a cart-pole system using Box2D.
 
-    Arguments:
-        position (Box2D.b2Vec2): x, y co-ordinates of pendulum's
-                                 fulcrum.
-        pole_length (float)
-        pole_width (float)
-        cart_width (float)
-        cart_height (float)
-        start_angle (float)
-        joint_friction_torque (float)
-        sliding_friction (float)
-        min_motor_force (float)
-    """
+    Attributes:
+        position (tuple or b2Vec2): (x, y) co-ordinates of cart.
+        pole_length (float): Dimensions of cart-pole system
+        pole_width (float): ...
+        cart_width (float):
+        cart_height (float):
+        start_angle (float): Initial angle of pole. Clockwise in
+                             radians. start_angle = 0.0 is vertical up.
+        joint_friction_torque (float): Determines the amount of friction
+                                       in the fulcrum joint.
+        sliding_friction (float): Determines the amount of friction
+                                  between the cart and ground.
+        min_motor_force (float): Determines how much force is applied by
+                                 each unit of input force.
+        cart_position (float): x position of cart
+        start_position (float): Initial x position of top of pole
+        inputs (list): List of input variables (of type vars.Variable).
+        outputs (list): List of output variables (of type vars.Variable).
+        force_settings (dict): Dictionary of values mapping inputs
+                               ('FR1', 'FR2', etc.) to units of force.
+        force (float): Applied force calculated in update_inputs().
+        cart_body (b2Body): Object to represent the pendulum physics.
+        pole_body (b2Body): ... etc.
+        cart_fixture (b2Body)
+        pole_fixture (b2Body)
+        cart_wheel1 (b2Body)
+        cart_wheel2 (b2Body)
+        joint (b2Body)
+        """
 
     def __init__(self, position=(0, 0), pole_length=12.0, pole_width=0.4, cart_width=4.0,
                  cart_height=2.0, start_angle=0.5*pi, joint_friction_torque=10.0,
@@ -246,6 +279,11 @@ class CartPole(object):
         }
 
     def add_to_box2d(self, world):
+        """Create the Box2D objects in world.
+
+        Args:
+            world: Box2D world object
+        """
 
         # Create a dynamic body for the cart
         self.cart_body = world.CreateDynamicBody(
@@ -258,26 +296,26 @@ class CartPole(object):
             angle=self.start_angle
         )
 
-        self.pole_fixture = self.pole_body.CreatePolygonFixture(
-            box=(0.5*self.pole_length, 0.5*self.pole_width, (0.5*self.pole_length, 0), 0.0),
-            density=1,
-            friction=0.3
-        )
-
         self.cart_fixture = self.cart_body.CreatePolygonFixture(
             box=(0.5*self.cart_width, 0.1*self.cart_height),
             density=1,
             friction=0.3
         )
 
-        self.cart_fixture = self.cart_body.CreateCircleFixture(
+        self.pole_fixture = self.pole_body.CreatePolygonFixture(
+            box=(0.5*self.pole_length, 0.5*self.pole_width, (0.5*self.pole_length, 0), 0.0),
+            density=1,
+            friction=0.3
+        )
+
+        self.cart_wheel1 = self.cart_body.CreateCircleFixture(
             pos=(-0.5*self.cart_width, 0),
             radius=0.5*self.cart_height,
             density=1,
             friction=0.3
         )
 
-        self.cart_fixture = self.cart_body.CreateCircleFixture(
+        self.cart_wheel2 = self.cart_body.CreateCircleFixture(
             pos=(0.5*self.cart_width, 0),
             radius=0.5*self.cart_height,
             density=1,
@@ -336,7 +374,7 @@ class CartPole(object):
 
     def reset(self):
         """Resets the model variables to their initial
-        state."""
+        states."""
 
         self.cart_body.position = self.cart_position
         self.cart_body.angularVelocity = 0.0
