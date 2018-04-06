@@ -1,10 +1,12 @@
-
+#!/usr/bin/env python
+"""Dynamic simulation of a pendulum.
+"""
 
 from pygame.locals import K_z, K_x, K_c, K_b, K_n, K_m
 
 from simulator import Simulator
 
-# Import the model(s) you want to simulate
+# Import the model you want to simulate
 from models import Pendulum
 
 # Import the controller(s) you want to simulate
