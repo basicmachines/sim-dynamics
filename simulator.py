@@ -25,8 +25,8 @@ https://github.com/pybox2d/pybox2d/tree/master/examples/simple
 """
 
 import pygame
-from pygame.locals import QUIT, KEYDOWN, K_ESCAPE, K_SPACE, K_0, K_1, K_2, \
-                          K_3, K_4, K_5, K_6, K_7, K_8, K_9, K_r
+from pygame.locals import QUIT, KEYDOWN, K_ESCAPE, K_SPACE, K_1, K_2, \
+                          K_3, K_4, K_5, K_6, K_7, K_8, K_9, K_r, K_q
 
 # Box2D is the main library. Box2D.b2 maps to Box2D.Box2D
 import Box2D
@@ -165,7 +165,8 @@ class Simulator(object):
             'SPACE - pause/resume',
             '{} - select controller (1=keyboard)'.format(
                                              range(1, len(controllers) + 1)),
-            'r - start/stop recording state',
+            'r - start/stop recording',
+            'q - reset model'
         ] + self.key_instructions + ['ESCAPE - quit']
 
         # Create a list of text fields to display
@@ -248,6 +249,10 @@ class Simulator(object):
                         else:
                             self.model_state_recorder.stop()
                             logging.info("Recording stopped")
+
+                    if event.key == K_q:
+                        self.model.reset()
+                        logging.info("Model state reset")
 
             # Call the current controller to set
             # the input values

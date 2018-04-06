@@ -25,8 +25,8 @@ https://github.com/pybox2d/pybox2d/tree/master/examples/simple
 """
 
 import Box2D
-from Box2D.b2 import vec2
-from math import sin, cos, pi
+from Box2D import b2Vec2
+from math import cos, pi
 from vars import Variable
 
 # TODO: Consider a superclass that models inherit from
@@ -41,18 +41,14 @@ class Pendulum(object):
     Dynamic simulation model of a pendulum using Box2D.
 
     Arguments:
-        world (Box2D.b2World): Box2D world to create pendulum in
         position (Box2D.b2Vec2): x, y co-ordinates of pendulum's
                                  fulcrum.
-        inputs (list): list of input variables (vars.Variable)
-        outputs (list): list of output variables (vars.Variable)
         arm_length (float)
         arm_width (float)
         ball_radius (float)
         start_angle (float): Initial angle of pendulum (radians)
         joint_friction_torque (float)
         min_motor_torque (float)
-
     """
 
     def __init__(self, position=(0.0, 0.0), arm_length=8.0, arm_width=0.4,
@@ -60,7 +56,7 @@ class Pendulum(object):
                  joint_friction_torque=10.0, min_motor_torque=20.0):
 
         self.name = 'Pendulum'
-        self.fulcrum_position = vec2(position)
+        self.fulcrum_position = b2Vec2(position)
 
         # Pendulum parameters
         self.arm_length = arm_length
@@ -168,13 +164,22 @@ class Pendulum(object):
         # Torque applied to pendulum
         self.outputs['T'].value = -self.torque
 
+    def reset(self):
+        """Resets the model variables to their initial
+        state."""
+
+        self.body.angularVelocity = 0.0
+        self.body.linearVelocity = b2Vec2(0.0, 0.0)
+        self.body.position = self.fulcrum_position
+        self.body.angle = self.start_angle
+        self.update_outputs()
+
 
 class CartPole(object):
     """
     Dynamic simulation model of a cart-pole system using Box2D.
 
     Arguments:
-        world (Box2D.b2World): Box2D world to create pendulum in
         position (Box2D.b2Vec2): x, y co-ordinates of pendulum's
                                  fulcrum.
         pole_length (float)
@@ -187,9 +192,9 @@ class CartPole(object):
         min_motor_force (float)
     """
 
-    def __init__(self, position=(0, 0), pole_length=12.0,
-                 pole_width=0.4, cart_width=4.0, cart_height=2.0, start_angle=0.5*pi,
-                 joint_friction_torque=10.0, sliding_friction=20.0, min_motor_force=10.0):
+    def __init__(self, position=(0, 0), pole_length=12.0, pole_width=0.4, cart_width=4.0,
+                 cart_height=2.0, start_angle=0.5*pi, joint_friction_torque=10.0,
+                 sliding_friction=20.0, min_motor_force=10.0):
 
         self.name = 'Cart-Pole'
         self.start_position = position[0]
@@ -203,7 +208,7 @@ class CartPole(object):
         self.joint_friction_torque = joint_friction_torque
         self.sliding_friction = sliding_friction
         self.min_motor_force = min_motor_force
-        self.cart_position = vec2(position[0] - pole_length*cos(start_angle), position[1])
+        self.cart_position = b2Vec2(position[0] - pole_length*cos(start_angle), position[1])
 
         # Cart force inputs (manipulated variables)
         self.inputs = {
@@ -323,3 +328,16 @@ class CartPole(object):
 
         # Force applied to cart
         self.outputs['F'].value = -self.force
+
+    def reset(self):
+        """Resets the model variables to their initial
+        state."""
+
+        self.cart_body.position = self.cart_position
+        self.cart_body.angularVelocity = 0.0
+        self.cart_body.linearVelocity = b2Vec2(0.0, 0.0)
+        self.pole_body.angle = self.start_angle
+        self.pole_body.position = self.cart_position
+        self.pole_body.angularVelocity = 0.0
+        self.pole_body.linearVelocity = b2Vec2(0.0, 0.0)
+        self.update_outputs()
