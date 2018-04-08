@@ -24,17 +24,18 @@ in the pybox2d repository:
 https://github.com/pybox2d/pybox2d/tree/master/examples/simple
 """
 
+
 class Variable(object):
     """Used to define variables for use as inputs to or outputs
     from a physics simulation model.
 
     Arguments:
-    type (str): Either 'float', 'discrete', or 'bool'.  Floats are
-                Python float values.  'bool' means Boolean (True or
-                False).  'discrete' means the variable may only have
-                a finite list of values (e.g. [-1.0, 0.0, 1.0]).
-                Integers are not currently supported.  Use floats
-                or discrete instead.
+    ntype (str): Either 'float', 'discrete', or 'bool'.  Floats are
+                 Python float values.  'bool' means Boolean (True or
+                 False).  'discrete' means the variable may only have
+                 a finite list of values (e.g. [-1.0, 0.0, 1.0]).
+                 Integers are not currently supported.  Use floats
+                 or discrete instead.
     name (str): Give the variable a name as a string
     values (list): Provide a list of possible values (mandatory for
                  for discrete variables)
@@ -45,30 +46,30 @@ class Variable(object):
 
     # The following types are used to represent binary (bool),
     # discrete (int), and continuous (float) variables.
-    types = {
+    ntypes = {
         'float': float,
         'discrete': (float, int, str, bool),
         'bool': bool
     }
 
-    def __init__(self, type, name=None, values=None, lb=None, ub=None, init_value=None):
+    def __init__(self, ntype, name=None, values=None, lb=None, ub=None, init_value=None):
 
-        if type not in self.types:
-            raise ValueError("Input type {} not supported".format(type))
+        if ntype not in self.ntypes:
+            raise ValueError("Input type {} not supported".format(ntype))
 
-        self.type = type
+        self.ntype = ntype
         self.name = name
 
-        if type == int:
+        if ntype == int:
             if self.values is None:
                 raise ValueError("Must provide a list of values for discrete input.")
             self.values = values
-        elif type == float:
+        elif ntype == float:
             self.lb = lb
             self.ub = ub
 
         if init_value:
-            if not isinstance(init_value, self.types[type]):
+            if not isinstance(init_value, self.ntypes[ntype]):
                 raise ValueError("Initial value is not of the correct type.")
-        self.value = init_value
 
+        self.value = init_value

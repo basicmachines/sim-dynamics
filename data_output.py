@@ -100,10 +100,10 @@ class ModelStateRecorder(object):
                 labels.append(str(k))
 
             for k in self.model.outputs.keys():
-                labels.append("{}_p1".format(k))
+                labels.append(str(k))
 
             for k in self.model.outputs.keys():
-                labels.append(str(k))
+                labels.append("{}_p1".format(k))
 
             logging.info("Output file %s opened", self.output_filename.__repr__())
             self.output_file.write(",".join(labels) + '\n')
@@ -157,4 +157,6 @@ class ModelStateRecorder(object):
         for i in self.model.outputs.values():
             d.append("{}".format(i.value))
 
+        # TODO: Modify so that it is always comparable with current outputs.
+        # Currently angles do not match when 'wrap-around' occurs
         self.previous_state = ",".join(d)

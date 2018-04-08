@@ -98,9 +98,9 @@ class PIDController(object):
         if len(self.errors) > self.integral_length:
             self.error_sum -= self.errors.pop()
 
-        output_value = (self.kp * error +
-                        self.ki * self.error_sum +
-                        self.kd * self.de_dt)
+        output_value = -(self.kp * error +
+                         self.ki * self.error_sum +
+                         self.kd * self.de_dt)
 
         if output_value > self.mv_max:
             output_value = self.mv_max

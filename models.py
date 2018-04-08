@@ -25,8 +25,8 @@ https://github.com/pybox2d/pybox2d/tree/master/examples/simple
 """
 
 from Box2D import b2Vec2
-from math import cos, pi
 from vars import Variable
+from math import cos, pi
 
 # TODO: Consider a superclass that models inherit from
 # class Box2DModel(object):
@@ -157,7 +157,9 @@ class Pendulum(object):
         )
 
         self.torque = torque_setting*self.min_motor_torque
-        self.body.ApplyTorque(self.torque, wake=True)
+
+        # Note minus sign because Box2D world angles are anti-clockwise
+        self.body.ApplyTorque(-self.torque, wake=True)
 
     def update_outputs(self):
         """Updates the values of the output variables to
@@ -183,7 +185,8 @@ class Pendulum(object):
         self.outputs['dadt'].value = -self.body.angularVelocity
 
         # Torque applied to pendulum
-        self.outputs['T'].value = -self.torque
+        # TODO: Why is this minus sign there?
+        self.outputs['T'].value = self.torque
 
     def reset(self):
         """Resets the model variables to their initial
@@ -370,6 +373,7 @@ class CartPole(object):
         self.outputs['dxdt'].value = dadt*self.pole_length/(2*pi) + dxdt
 
         # Force applied to cart
+        # TODO: Why is this minus sign there?
         self.outputs['F'].value = -self.force
 
     def reset(self):

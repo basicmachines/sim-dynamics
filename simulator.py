@@ -290,7 +290,7 @@ class Simulator(object):
             # Display model input and output values
             for (p, d) in (list(self.model.inputs.items()) +
                            list(self.model.outputs.items())):
-                if d.type == 'float':
+                if d.ntype == 'float':
                     f = "{:8.2f}"
                 else:
                     f = "{}"

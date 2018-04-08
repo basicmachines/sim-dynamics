@@ -22,12 +22,12 @@ model = Pendulum(position=(16, 12))
 
 # Map the keys to the model inputs
 key_actions = {
-    K_z: 'TP3', # Positive torque values (counter-clockwise)
-    K_x: 'TP2',
-    K_c: 'TP1',
-    K_m: 'TN3', # Negative torque values (clockwise)
-    K_n: 'TN2',
-    K_b: 'TN1'
+    K_m: 'TP3', # Positive torque values (counter-clockwise)
+    K_n: 'TP2',
+    K_b: 'TP1',
+    K_z: 'TN3', # Negative torque values (clockwise)
+    K_x: 'TN2',
+    K_c: 'TN1'
 }
 
 kbd_controller = KeyboardInput(model.inputs, key_actions=key_actions)
