@@ -273,7 +273,7 @@ class CartPole(object):
         self.start_angle = start_angle
         self.joint_friction_torque = joint_friction_torque
         self.sliding_friction = sliding_friction
-        #TODO: Sliding friction is not implemented yet
+        # TODO: Sliding friction is not doing anything yet
 
         self.min_motor_force = min_motor_force
         self.density = density
@@ -427,8 +427,6 @@ class Segway(object):
         wheel_radius (float):
         start_angle (float): Initial angle of segwsy. Clockwise in
                              radians. start_angle = 0.0 is vertical up.
-        joint_friction_torque (float): Determines the amount of friction
-                                       in the wheel joint.
         max_motor_torque (float): Maximum torque that the motor can apply
                                   to the wheel to change speed.
         motor_speed_unit (float): Determines rotation speed of wheel for
@@ -451,7 +449,7 @@ class Segway(object):
         """
 
     def __init__(self, position=(0, 0), pole_length=6.0, pole_width=0.4, wheel_radius=2.0,
-                 start_angle=0.5*pi, max_motor_torque=400.0, motor_speed_unit=0.25*pi,
+                 start_angle=0.5*pi, max_motor_torque=320.0, motor_speed_unit=0.5*pi,
                  density=1.0, speed_inputs=None):
 
         self.name = 'Segway'
@@ -541,7 +539,7 @@ class Segway(object):
             pos=(0.0, 0.0),
             radius=0.5*self.wheel_radius,
             density=self.density,
-            friction=1.0
+            friction=4.0 # Needed to stop the wheels slipping
         )
 
         self.pole_fixture = self.pole_body.CreatePolygonFixture(
@@ -563,7 +561,7 @@ class Segway(object):
             pos=(0.5*self.pole_length, 0.0),
             radius=0.4*self.wheel_radius,
             density=self.density,
-            friction=1.0
+            friction=0.3
         )
 
         # Join the two bodies together
