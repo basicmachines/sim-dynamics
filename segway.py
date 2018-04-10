@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-"""Dynamic simulation of a segway using differential
-equations.
+"""Dynamic simulation of a segway using pyBox2D
+and pygame.
 """
 
 from pygame.locals import K_z, K_x, K_c, K_b, K_n, K_m
@@ -16,7 +16,7 @@ TARGET_FPS = 30
 
 # Initialize model
 
-model = Segway(position=(16, 2), density=5.0)
+model = Segway(position=(16, 2))
 
 # ----------- Setup Keyboard Controller ---------------
 

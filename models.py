@@ -277,7 +277,8 @@ class CartPole(object):
 
         self.motor_force_unit = min_motor_force
         self.density = density
-        self.cart_position = b2Vec2(position[0] - pole_length*cos(start_angle), position[1])
+        self.cart_position = b2Vec2(position[0] - pole_length*cos(start_angle),
+                                    position[1])
 
         # Cart force inputs (manipulated variables)
         self.inputs = {
@@ -448,9 +449,9 @@ class Segway(object):
         joint (b2Body)
         """
 
-    def __init__(self, position=(0, 0), pole_length=6.0, pole_width=0.4, wheel_radius=2.0,
-                 start_angle=0.5*pi, max_motor_torque=320.0, motor_speed_unit=0.5*pi,
-                 density=1.0, speed_inputs=None):
+    def __init__(self, position=(0, 0), pole_length=6.0, pole_width=0.4,
+                 wheel_radius=2.0, start_angle=0.5*pi, max_motor_torque=320.0,
+                 motor_speed_unit=0.5*pi, density=5.0, speed_inputs=None):
 
         self.name = 'Segway'
         self.start_position = float(position[0])
