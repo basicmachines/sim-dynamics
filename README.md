@@ -5,10 +5,13 @@ self-contained [pygame](https://www.pygame.org/) environment for the purpose of
 experimenting with dynamic models and dynamic model
 controllers.
 
-<img src="/images/screenshot.png" width=400 alt="Screenshot">
+Three example models are included: a simple pendulum, a
+cart-pole system and a segway. 
 
-Two example models are included: a simple pendulum and
-a cart-pole system. 
+<img src="/images/screenshot_pendulum.png" width=400 alt="Screenshot">
+
+<img src="/images/screenshot_cartpole.png" width=200 alt="Screenshot">
+<img src="/images/screenshot_segway.png" width=200 alt="Screenshot">
 
 The systems can be influenced manually through keyboard
 commands or controlled by a simple controller (PID).
@@ -25,6 +28,7 @@ Example simulations:
 
 1. pendulum.py - simple pendulum
 2. cart-pole.py - cart-and-pole system
+3. segway.py - segway
 
 The pyBox2d shape classes are extended with some drawing
 code so that they render in pygame.  Adapted from the examples 
