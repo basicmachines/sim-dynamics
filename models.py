@@ -34,6 +34,7 @@ from math import cos, pi
 #     """
 #     pass
 
+
 class Pendulum(object):
     """
     Dynamic simulation model of a pendulum using Box2D.
@@ -52,8 +53,11 @@ class Pendulum(object):
                                   each unit of input torque.
         inputs (list): List of input variables (of type vars.Variable).
         outputs (list): List of output variables (of type vars.Variable).
-        torque_settings (dict): Dictionary of values mapping inputs
-                                ('TP1', 'TP2', etc.) to units of torque.
+        torque_settings (dict): Dictionary mapping inputs ('TP1', 'TP2', ...)
+                                to units of torque.
+        torque_inputs (dict): Dictionary mapping units of torque to a desired
+                              set of boolean torque inputs. (This is needed
+                              by controllers such as PID).
         torque (float): Applied torque calculated in update_inputs().
         anchor_body (b2Body): Object to represent the pendulum physics.
         body (b2Body): ... etc.
@@ -63,8 +67,8 @@ class Pendulum(object):
     """
 
     def __init__(self, position=(0.0, 0.0), arm_length=8.0, arm_width=0.4,
-                 ball_radius=1.0, start_angle=pi,
-                 joint_friction_torque=10.0, min_motor_torque=20.0):
+                 ball_radius=1.0, start_angle=pi, joint_friction_torque=10.0,
+                 min_motor_torque=20.0, density=1.0, torque_inputs=None):
 
         self.name = 'Pendulum'
         self.position = b2Vec2(position)
@@ -76,6 +80,7 @@ class Pendulum(object):
         self.start_angle = start_angle
         self.joint_friction_torque = joint_friction_torque
         self.min_motor_torque = min_motor_torque
+        self.density = density
 
         # Pendulum torque inputs (manipulated variables)
         self.inputs = {
@@ -95,6 +100,27 @@ class Pendulum(object):
             'TN2': -2,
             'TN3': -4
         }
+
+        if torque_inputs is None:
+            # Dictionary used to convert a desired torque
+            # value to a set of boolean outputs
+            self.torque_inputs = {
+                0: [],
+                1: ['TP1'],
+                2: ['TP2'],
+                3: ['TP1', 'TP2'],
+                4: ['TP3'],
+                5: ['TP1', 'TP3'],
+                6: ['TP2', 'TP3'],
+                7: ['TP1', 'TP2', 'TP3'],
+                -1: ['TN1'],
+                -2: ['TN2'],
+                -3: ['TN1', 'TN2'],
+                -4: ['TN3'],
+                -5: ['TN1', 'TN3'],
+                -6: ['TN2', 'TN3'],
+                -7: ['TN1', 'TN2', 'TN3']
+            }
 
         self.torque = 0.0
 
@@ -125,14 +151,14 @@ class Pendulum(object):
 
         self.arm_fixture = self.body.CreatePolygonFixture(
             box=(0.5*self.arm_length, 0.5*self.arm_width, (0.5*self.arm_length, 0), 0.0),
-            density=1,
+            density=self.density,
             friction=0.3
         )
 
         self.ball_fixture = self.body.CreateCircleFixture(
             pos=(self.arm_length, 0),
             radius=self.ball_radius,
-            density=1,
+            density=self.density,
             friction=0.3
         )
 
@@ -185,7 +211,6 @@ class Pendulum(object):
         self.outputs['dadt'].value = -self.body.angularVelocity
 
         # Torque applied to pendulum
-        # TODO: Why is this minus sign there?
         self.outputs['T'].value = self.torque
 
     def reset(self):
@@ -235,10 +260,10 @@ class CartPole(object):
 
     def __init__(self, position=(0, 0), pole_length=12.0, pole_width=0.4, cart_width=4.0,
                  cart_height=2.0, start_angle=0.5*pi, joint_friction_torque=10.0,
-                 sliding_friction=20.0, min_motor_force=10.0):
+                 sliding_friction=20.0, min_motor_force=10.0, density=1.0):
 
         self.name = 'Cart-Pole'
-        self.start_position = position[0]
+        self.start_position = float(position[0])
 
         # Pendulum parameters
         self.pole_length = pole_length
@@ -248,7 +273,10 @@ class CartPole(object):
         self.start_angle = start_angle
         self.joint_friction_torque = joint_friction_torque
         self.sliding_friction = sliding_friction
+        #TODO: Sliding friction is not implemented yet
+
         self.min_motor_force = min_motor_force
+        self.density = density
         self.cart_position = b2Vec2(position[0] - pole_length*cos(start_angle), position[1])
 
         # Cart force inputs (manipulated variables)
@@ -271,8 +299,6 @@ class CartPole(object):
         }
 
         self.force = 0.0
-
-        self.start_position = float(position[0])
 
         # Model variables (outputs)
         self.outputs = {
@@ -301,27 +327,27 @@ class CartPole(object):
 
         self.cart_fixture = self.cart_body.CreatePolygonFixture(
             box=(0.5*self.cart_width, 0.1*self.cart_height),
-            density=1,
+            density=self.density,
             friction=0.3
         )
 
         self.pole_fixture = self.pole_body.CreatePolygonFixture(
             box=(0.5*self.pole_length, 0.5*self.pole_width, (0.5*self.pole_length, 0), 0.0),
-            density=1,
+            density=self.density,
             friction=0.3
         )
 
         self.cart_wheel1 = self.cart_body.CreateCircleFixture(
             pos=(-0.5*self.cart_width, 0),
             radius=0.5*self.cart_height,
-            density=1,
+            density=self.density,
             friction=0.3
         )
 
         self.cart_wheel2 = self.cart_body.CreateCircleFixture(
             pos=(0.5*self.cart_width, 0),
             radius=0.5*self.cart_height,
-            density=1,
+            density=self.density,
             friction=0.3
         )
 
@@ -340,7 +366,7 @@ class CartPole(object):
         the bodies in the physical model.  Run this method
         before each time step of the physics simulation."""
 
-        # Check each input and adjust torque applied
+        # Check each input and adjust force applied
         force_setting = sum(
             [self.force_settings[t] for t in self.inputs if self.inputs[t].value]
         )
@@ -366,10 +392,10 @@ class CartPole(object):
 
         dadt = -self.pole_body.angularVelocity
 
-        # Horizontal speed of top of base of pole
+        # Horizontal velocity of top of base of pole
         dxdt = self.pole_body.linearVelocity.x
 
-        # Horizontal speed of top of pole
+        # Horizontal velocity of top of pole
         self.outputs['dxdt'].value = dadt*self.pole_length/(2*pi) + dxdt
 
         # Force applied to cart
@@ -385,6 +411,226 @@ class CartPole(object):
         self.cart_body.linearVelocity = b2Vec2(0.0, 0.0)
         self.pole_body.angle = self.start_angle
         self.pole_body.position = self.cart_position
+        self.pole_body.angularVelocity = 0.0
+        self.pole_body.linearVelocity = b2Vec2(0.0, 0.0)
+        self.update_outputs()
+
+
+class Segway(object):
+    """
+    Dynamic simulation model of a segway using Box2D.
+
+    Attributes:
+        start_position (float): x co-ordinates of top of pole.
+        pole_length (float): Dimensions of segway
+        pole_width (float): ...
+        wheel_radius (float):
+        start_angle (float): Initial angle of segwsy. Clockwise in
+                             radians. start_angle = 0.0 is vertical up.
+        joint_friction_torque (float): Determines the amount of friction
+                                       in the wheel joint.
+        max_motor_torque (float): Maximum torque that the motor can apply
+                                  to the wheel to change speed.
+        motor_speed_unit (float): Determines rotation speed of wheel for
+                                  each unit of input speed.
+        wheel_start_position (tuple or b2Vec2): Initial (x, y) position of
+                                                wheel centre
+        inputs (list): List of input variables (of type vars.Variable).
+        outputs (list): List of output variables (of type vars.Variable).
+        speed_settings (dict): Dictionary mapping inputs ('SP1', 'SP2', ...)
+                            to units of speed.
+        speed_inputs (dict): Dictionary mapping units of speed to a desired
+                             set of boolean speed inputs. (This is needed
+                             by controllers such as PID).
+        speed (float): Speed of wheels (calculated in update_inputs).
+        wheel_body (b2Body): Object to represent the pendulum physics.
+        pole_body (b2Body): ... etc.
+        wheel_fixture (b2Body)
+        pole_fixture (b2Body)
+        joint (b2Body)
+        """
+
+    def __init__(self, position=(0, 0), pole_length=6.0, pole_width=0.4, wheel_radius=2.0,
+                 start_angle=0.5*pi, max_motor_torque=400.0, motor_speed_unit=0.25*pi,
+                 density=1.0, speed_inputs=None):
+
+        self.name = 'Segway'
+        self.start_position = float(position[0])
+
+        # Pendulum parameters
+        self.pole_length = pole_length
+        self.pole_width = pole_width
+        self.wheel_radius = wheel_radius
+        self.start_angle = start_angle
+        self.max_motor_torque = max_motor_torque
+        self.motor_speed_unit = motor_speed_unit
+        self.density = density
+        self.wheel_start_position = b2Vec2(
+            self.start_position - pole_length*cos(start_angle),
+            position[1]
+        )
+
+        # Segway speed inputs (manipulated variables)
+        self.inputs = {
+            'SP1': Variable('bool', name='SP1'),
+            'SP2': Variable('bool', name='SP2'),
+            'SP3': Variable('bool', name='SP3'),
+            'SN1': Variable('bool', name='SN1'),
+            'SN2': Variable('bool', name='SN2'),
+            'SN3': Variable('bool', name='SN3')
+        }
+
+        self.speed_settings = {
+            'SP1': 1,
+            'SP2': 2,
+            'SP3': 4,
+            'SN1': -1,
+            'SN2': -2,
+            'SN3': -4
+        }
+
+        if speed_inputs is None:
+            self.speed_inputs = {
+                0: [],
+                1: ['SP1'],
+                2: ['SP2'],
+                3: ['SP1', 'SP2'],
+                4: ['SP3'],
+                5: ['SP1', 'SP3'],
+                6: ['SP2', 'SP3'],
+                7: ['SP1', 'SP2', 'SP3'],
+                -1: ['SN1'],
+                -2: ['SN2'],
+                -3: ['SN1', 'SN2'],
+                -4: ['SN3'],
+                -5: ['SN1', 'SN3'],
+                -6: ['SN2', 'SN3'],
+                -7: ['SN1', 'SN2', 'SN3']
+            }
+
+        self.speed = 0.0
+
+        # Model variables (outputs)
+        self.outputs = {
+            'R': Variable('float', name='R', init_value=0.0),
+            'a': Variable('float', name='a', init_value=self.start_angle),
+            'dadt': Variable('float', name='dadt', init_value=0.0),
+            'x': Variable('float', name='x', init_value=self.start_position),
+            'dxdt': Variable('float', name='dxdt', init_value=0.0)
+        }
+
+    def add_to_box2d(self, world):
+        """Create the Box2D objects in world.
+
+        Args:
+            world: Box2D world object
+        """
+
+        # Create a dynamic body for the cart
+        self.wheel_body = world.CreateDynamicBody(
+            position=self.wheel_start_position
+        )
+
+        # Create a dynamic body for the pole
+        self.pole_body = world.CreateDynamicBody(
+            position=self.wheel_start_position,
+            angle=self.start_angle
+        )
+
+        self.wheel_fixture = self.wheel_body.CreateCircleFixture(
+            pos=(0.0, 0.0),
+            radius=0.5*self.wheel_radius,
+            density=self.density,
+            friction=1.0
+        )
+
+        self.pole_fixture = self.pole_body.CreatePolygonFixture(
+            box=(0.5*self.pole_length, 0.5*self.pole_width, (0.5*self.pole_length, 0), 0.0),
+            density=self.density,
+            friction=0.3
+        )
+
+        # This fixture is purely to make the
+        # wheel rotation visible
+        self.wheel_hub = self.wheel_body.CreatePolygonFixture(
+            box=(0.25*self.wheel_radius, 0.25*self.wheel_radius, (0, 0), 0.0),
+            density=0.0,
+            friction=0.0
+        )
+
+        # Mass on pole fixture
+        self.pole_mass_fixture = self.pole_body.CreateCircleFixture(
+            pos=(0.5*self.pole_length, 0.0),
+            radius=0.4*self.wheel_radius,
+            density=self.density,
+            friction=1.0
+        )
+
+        # Join the two bodies together
+        # Use a motor to simulate friction
+        self.joint = world.CreateRevoluteJoint(
+            bodyA=self.wheel_body,
+            bodyB=self.pole_body,
+            anchor=self.wheel_body.worldCenter,
+            maxMotorTorque=self.max_motor_torque,
+            motorSpeed=0.0,
+            enableMotor=True)
+
+    def update_inputs(self):
+        """Applies the values of the input variables to
+        the bodies in the physical model.  Run this method
+        before each time step of the physics simulation."""
+
+        # Check inputs and update speed of motor
+        speed_setting = sum(
+            [self.speed_settings[t] for t in self.inputs if self.inputs[t].value]
+        )
+
+        self.speed = speed_setting*self.motor_speed_unit
+
+        # Note minus sign because Box2D world angles are anti-clockwise
+        self.joint.motorSpeed = self.speed
+
+    def update_outputs(self):
+        """Updates the values of the output variables to
+        reflect the current state of the model.  Run this
+        method after each time step of the physics
+        simulation."""
+
+        # The angle of the pole is measured from the vertical
+        # position (clockwise = positive). The range of the
+        # angle is limited to -pi to pi by the statement above
+        self.outputs['a'].value = 0.5*pi - self.pole_body.angle
+
+        # Speed of rotation
+        self.outputs['dadt'].value = -self.pole_body.angularVelocity
+
+        # For this model, the control variable is the horizontal
+        # position of the top of the pole. x=0 is the center position.
+
+        pole_angle = self.pole_body.angle
+        self.outputs['x'].value = self.pole_length*cos(pole_angle) + self.pole_body.position.x
+
+        dadt = -self.pole_body.angularVelocity
+
+        # Horizontal speed of top of base of pole
+        dxdt = self.pole_body.linearVelocity.x
+
+        # Horizontal speed of top of pole
+        self.outputs['dxdt'].value = dadt*self.pole_length/(2*pi) + dxdt
+
+        # Rotational speed of wheels
+        self.outputs['R'].value = self.speed
+
+    def reset(self):
+        """Resets the model variables to their initial
+        states."""
+
+        self.wheel_body.position = self.wheel_start_position
+        self.wheel_body.angularVelocity = 0.0
+        self.wheel_body.linearVelocity = b2Vec2(0.0, 0.0)
+        self.pole_body.angle = self.start_angle
+        self.pole_body.position = self.wheel_start_position
         self.pole_body.angularVelocity = 0.0
         self.pole_body.linearVelocity = b2Vec2(0.0, 0.0)
         self.update_outputs()

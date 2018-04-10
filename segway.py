@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-"""Dynamic simulation of a pendulum.
+"""Dynamic simulation of a segway using differential
+equations.
 """
 
 from pygame.locals import K_z, K_x, K_c, K_b, K_n, K_m
-
 from simulator import Simulator
 
 # Import the model you want to simulate
-from models import Pendulum
+from models import Segway
 
 # Import the controller(s) you want to simulate
 from controllers import PIDController, KeyboardInput
@@ -16,18 +16,18 @@ TARGET_FPS = 30
 
 # Initialize model
 
-model = Pendulum(position=(16, 12))
+model = Segway(position=(16, 2), density=5.0)
 
 # ----------- Setup Keyboard Controller ---------------
 
 # Map the keys to the model inputs
 key_actions = {
-    K_m: 'TP3', # Positive torque values (counter-clockwise)
-    K_n: 'TP2',
-    K_b: 'TP1',
-    K_z: 'TN3', # Negative torque values (clockwise)
-    K_x: 'TN2',
-    K_c: 'TN1'
+    K_m: 'SP3', # Positive rotational speed (counter-clockwise)
+    K_n: 'SP2',
+    K_b: 'SP1',
+    K_z: 'SN3', # Negative rotational speed (clockwise)
+    K_x: 'SN2',
+    K_c: 'SN1'
 }
 
 kbd_controller = KeyboardInput(model.inputs, key_actions=key_actions)
@@ -48,7 +48,7 @@ pid_controller = PIDController(
     set_point=0.0,
     mv_max=7,
     mv_min=-7,
-    bool_outputs=model.torque_settings,
+    bool_outputs=model.speed_inputs,
     time_step=1.0 / TARGET_FPS
 )
 

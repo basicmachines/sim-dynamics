@@ -86,8 +86,14 @@ class Simulator(object):
         self.clock = pygame.time.Clock()
 
         self.object_colors = {
-            staticBody: (64, 64, 64, 255),
-            dynamicBody: (192, 192, 192, 128),
+            staticBody: [
+                (64, 64, 64, 255)
+            ],
+            dynamicBody: [
+                (192, 192, 192, 128),
+                (160, 160, 160, 128),
+                (128, 128, 128, 128)
+            ]
         }
 
         # ------- pybox2d world setup -------
@@ -95,18 +101,21 @@ class Simulator(object):
         # The following functions extend the Box2D shape classes
         # with a method that draws them in Pygame
 
-        def my_draw_polygon(polygon, body, fixture):
+        def my_draw_polygon(polygon, body, fixture, color_code):
             vertices = [(body.transform * v) * PPM for v in polygon.vertices]
             vertices = [(v[0], SCREEN_HEIGHT - v[1]) for v in vertices]
-            pygame.draw.polygon(self.screen, self.object_colors[body.type],
-                                vertices)
+            colors = self.object_colors[body.type]
+            color = colors[color_code % len(colors)]
+            pygame.draw.polygon(self.screen, color, vertices)
 
         polygonShape.draw = my_draw_polygon
 
-        def my_draw_circle(circle, body, fixture):
+        def my_draw_circle(circle, body, fixture, color_code):
             position = body.transform * circle.pos * PPM
             position = (position[0], SCREEN_HEIGHT - position[1])
-            pygame.draw.circle(self.screen, self.object_colors[body.type],
+            colors = self.object_colors[body.type]
+            color = colors[color_code % len(colors)]
+            pygame.draw.circle(self.screen, color,
                                [int(x) for x in position],
                                int(circle.radius * PPM))
             # Note: Python 3.x will enforce that pygame get the integers
@@ -115,7 +124,7 @@ class Simulator(object):
         circleShape.draw = my_draw_circle
 
         # Create the world
-        self.world = Box2D.b2.world(gravity=(0, -10), doSleep=True)
+        self.world = Box2D.b2.world(gravity=(0, -9.81), doSleep=True)
         logging.info("Box2D world initialized")
 
         # Keep track of number of time steps
@@ -323,8 +332,8 @@ class Simulator(object):
 
             # Draw the world
             for body in self.world.bodies:
-                for fixture in body.fixtures:
-                    fixture.shape.draw(body, fixture)
+                for color_code, fixture in enumerate(body.fixtures):
+                    fixture.shape.draw(body, fixture, color_code)
 
             # Flip the screen and try to keep at the target FPS
             pygame.display.flip()
