@@ -10,8 +10,7 @@ cart-pole system and a segway.
 
 <img src="/images/screenshot_pendulum.png" width=400 alt="Screenshot">
 
-<img src="/images/screenshot_cartpole.png" width=200 alt="Screenshot">
-<img src="/images/screenshot_segway.png" width=200 alt="Screenshot">
+<img src="/images/screenshot_cartpole.png" width=200 alt="Screenshot"> <img src="/images/screenshot_segway.png" width=200 alt="Screenshot">
 
 The systems can be influenced manually through keyboard
 commands or controlled by a simple controller (PID).
