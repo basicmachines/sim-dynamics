@@ -79,7 +79,7 @@ class Pendulum(object):
         self.ball_radius = ball_radius
         self.start_angle = start_angle
         self.joint_friction_torque = joint_friction_torque
-        self.min_motor_torque = min_motor_torque
+        self.motor_torque_unit = min_motor_torque
         self.density = density
 
         # Pendulum torque inputs (manipulated variables)
@@ -182,7 +182,7 @@ class Pendulum(object):
             [self.torque_settings[t] for t in self.inputs if self.inputs[t].value]
         )
 
-        self.torque = torque_setting*self.min_motor_torque
+        self.torque = torque_setting*self.motor_torque_unit
 
         # Note minus sign because Box2D world angles are anti-clockwise
         self.body.ApplyTorque(-self.torque, wake=True)
@@ -275,7 +275,7 @@ class CartPole(object):
         self.sliding_friction = sliding_friction
         # TODO: Sliding friction is not doing anything yet
 
-        self.min_motor_force = min_motor_force
+        self.motor_force_unit = min_motor_force
         self.density = density
         self.cart_position = b2Vec2(position[0] - pole_length*cos(start_angle), position[1])
 
@@ -371,7 +371,7 @@ class CartPole(object):
             [self.force_settings[t] for t in self.inputs if self.inputs[t].value]
         )
 
-        self.force = force_setting*self.min_motor_force
+        self.force = force_setting*self.motor_force_unit
         self.pole_body.ApplyForce(force=(self.force, 0.0), point=(0.0, 0.0), wake=True)
 
     def update_outputs(self):
